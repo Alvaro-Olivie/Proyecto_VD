@@ -44,6 +44,9 @@ for (let i = 0; i < weatherData.daily.time.length; i++) {
 	);
 }
 
+print("Weather data for " + timezone + " (" + timezoneAbbreviation + ")");
+print(weatherData)
+
 const getWeatherData = () => {
 	return weatherData;
 }
