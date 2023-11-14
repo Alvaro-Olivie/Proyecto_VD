@@ -1,9 +1,11 @@
 import requests
+import csv
+import re
 from bs4 import BeautifulSoup
 
 # Step 2: Make a GET request to the URL
-url = 'https://www.infoplease.com/geography/major-cities-latitude-longitude-and-corresponding-time-zones'
-response = requests.get(url)
+URL = 'https://www.infoplease.com/geography/major-cities-latitude-longitude-and-corresponding-time-zones'
+response = requests.get(URL, timeout=10)
 
 # Step 3: Parse the HTML content
 soup = BeautifulSoup(response.content, 'html.parser')
@@ -18,38 +20,34 @@ for row in table.find_all('tr'):
     columns = [element.text.strip() for element in columns]
     data.append([element for element in columns if element]) # Get rid of empty values
 
-# Print the data
-for element in data:
-    print(element)
 
 # elminate the first two elements
 data = data[2:]
 
-# now seperate the first element in each row into city and country and insert everything into a new dataframe
-for element in data:
-    # split the first element into city and country
-    city_country = element[0].split(',')
-    # insert city and country into the dataframe
+# create a new array where the first element is split by the comma
+array = []
 
+for i in range(len(data)-1):
+    print(i)
+    tmp = data[i][0].split(', ')
+    for dat in data[i][1:5]:
+        tmp.append(dat)
+    array.append(tmp)
 
-
-# now eliminate the last element in each row
-for element in data:
-    element.pop()
+data = []
+for i in array:
+    deg = i[2]
+    minutes = i[3][:-1]
+    direction = i[3][-1]
+    coord1 = (float(deg) + float(minutes)/60) * (-1 if direction in ['W', 'S'] else 1)
+    deg = i[4]
+    minutes = i[5][:-1]
+    direction = i[5][-1]
+    coord2 = (float(deg) + float(minutes)/60) * (-1 if direction in ['W', 'S'] else 1)
+    data.append([i[0], i[1], coord1, coord2])
 
 # now save this in a csv file
-import csv
+
 with open('cities.csv', 'w', newline='') as f:
     writer = csv.writer(f)
     writer.writerows(data)
-
-
-
-
-
-api_url = 'https://api.api-ninjas.com/v1/city?min_population=500'    
-response = requests.get(api_url, headers={'X-Api-Key': 'Omiq0qw7AkCQODAInA4yqw==981iwkdqfuPcqb84'})
-if response.status_code == requests.codes.ok:
-    print(response.text)
-else:
-    print("Error:", response.status_code, response.text)
