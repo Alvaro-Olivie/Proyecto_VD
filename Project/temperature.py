@@ -2,16 +2,21 @@ import openmeteo_requests
 import requests_cache
 import pandas as pd
 from retry_requests import retry
-import cities
+from cities import get_cities
 
-def get_temperatures():
+
+def get_temperatures(cityFilter, dates):
 	# Setup the Open-Meteo API client with cache and retry on error
 	cache_session = requests_cache.CachedSession('.cache', expire_after = -1)
 	retry_session = retry(cache_session, retries = 5, backoff_factor = 0.2)
 	openmeteo = openmeteo_requests.Client(session = retry_session)
 
 	# read the cities.csv file
-	city = cities.get_cities()
+	city = get_cities()
+
+	# filter the city list with the city names in the filter list
+	if filter != None:
+		city = city[city[0].isin(cityFilter)]
 
 	# get the coordinates in a list
 	lat = city[2].tolist()
@@ -23,8 +28,8 @@ def get_temperatures():
 	params = {
 		"latitude": lat,
 		"longitude": long,
-		"start_date": "2013-10-23",
-		"end_date": "2023-11-06",
+		"start_date": dates[0],
+		"end_date": dates[1],
 		"daily": "temperature_2m_mean"
 	}
 	responses = openmeteo.weather_api(URL, params=params)
@@ -45,6 +50,5 @@ def get_temperatures():
 		df['Country'] = [city[1][j]]*len(df)
 
 		dfs.append(df)
-	data = pd.concat(dfs)
 
-	return data
+	return dfs

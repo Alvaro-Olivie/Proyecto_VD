@@ -1,9 +1,10 @@
-import requests
-from bs4 import BeautifulSoup
+# import requests
+# from bs4 import BeautifulSoup
 import pandas as pd
 
 def get_cities():
     # Step 2: Make a GET request to the URL
+    """
     URL = 'https://www.infoplease.com/geography/major-cities-latitude-longitude-and-corresponding-time-zones'
     response = requests.get(URL, timeout=10)
 
@@ -47,5 +48,7 @@ def get_cities():
         data.append([i[0], i[1], coord1, coord2])
 
     result = pd.DataFrame(data, columns = ['City', 'Country', 'Latitude', 'Longitude'])
+    """
 
-    return result
+    return pd.read_csv('cities.csv', sep = ',', header = None)
+
