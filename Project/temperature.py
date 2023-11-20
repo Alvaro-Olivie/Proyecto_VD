@@ -7,9 +7,9 @@ from cities import get_cities
 
 def get_temperatures(cityFilter, dates):
 	# Setup the Open-Meteo API client with cache and retry on error
-	cache_session = requests_cache.CachedSession('.cache', expire_after = -1)
-	retry_session = retry(cache_session, retries = 5, backoff_factor = 0.2)
-	openmeteo = openmeteo_requests.Client(session = retry_session)
+	cache_session = requests_cache.CachedSession('.cache', expire_after=-1)
+	retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
+	openmeteo = openmeteo_requests.Client(session=retry_session)
 
 	# read the cities.csv file
 	city = get_cities()
@@ -35,24 +35,39 @@ def get_temperatures(cityFilter, dates):
 	}
 	responses = openmeteo.weather_api(URL, params=params)
 
-	data = pd.DataFrame(columns = ['City', 'Country', 'Latitude', 'Longitude', 'Date', 'Temperature'])
+	data = pd.DataFrame(columns=['City', 'Country', 'Latitude', 'Longitude', 'Date', 'Temperature'])
 
 	dfs = []
 
 	c = city[0].tolist()
 
 	for j in range(len(c)):
-		df = pd.DataFrame(columns = ['City', 'Date', 'Temperature'])
-		
+		df = pd.DataFrame(columns=['City', 'Date', 'Temperature'])
+
 		df['Temperature'] = responses[j].Daily().Variables(0).ValuesAsNumpy()
 
-		df['Date'] = pd.date_range(start = pd.to_datetime(dates[0]), periods = len(df), freq = 'D')
-		df['City'] = [c[j]]*len(df)
+		df['Date'] = pd.date_range(start=pd.to_datetime(dates[0]), periods=len(df), freq='D')
+		df['City'] = [c[j]] * len(df)
 
 		dfs.append(df)
-	
+
 	data = pd.concat(dfs)
 
 	df_pivot = data.pivot(index='Date', columns='City', values='Temperature')
 
-	return df_pivot
+	return calculate_moving_average(df_pivot)
+
+
+def calculate_moving_average(df):
+	if len(df) <= 365:
+		return df
+	if len(df) <= 730:
+		df = df.rolling(window=90).mean()
+	else:
+		df = df.rolling(window=365).mean()
+	return df
+
+
+
+
+
