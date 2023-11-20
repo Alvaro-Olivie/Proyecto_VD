@@ -15,13 +15,14 @@ def get_temperatures(cityFilter, dates):
 	city = get_cities()
 
 	# filter the city list with the city names in the filter list
-	if filter != None:
+	if filter is not None:
 		city = city[city[0].isin(cityFilter)]
 
 	# get the coordinates in a list
 	lat = city[2].tolist()
 	long = city[3].tolist()
 
+	print(dates)
 	# Make sure all required weather variables are listed here
 	# The order of variables in hourly or daily is important to assign them correctly below
 	URL = "https://archive-api.open-meteo.com/v1/archive"
@@ -38,17 +39,20 @@ def get_temperatures(cityFilter, dates):
 
 	dfs = []
 
-	for j in range(len(city[0])-1):
-		df = pd.DataFrame(columns = ['City', 'Country', 'Latitude', 'Longitude', 'Date', 'Temperature'])
+	c = city[0].tolist()
+
+	for j in range(len(c)):
+		df = pd.DataFrame(columns = ['City', 'Date', 'Temperature'])
 		
 		df['Temperature'] = responses[j].Daily().Variables(0).ValuesAsNumpy()
-		df['Latitude'] = [city[2][j]]*len(df)
-		df['Longitude'] = [city[3 ][j]]*len(df)
 
-		df['Date'] = pd.date_range(start = pd.to_datetime("2013-10-23"), periods = len(df), freq = 'D')
-		df['City'] = [city[0][j]]*len(df)
-		df['Country'] = [city[1][j]]*len(df)
+		df['Date'] = pd.date_range(start = pd.to_datetime(dates[0]), periods = len(df), freq = 'D')
+		df['City'] = [c[j]]*len(df)
 
 		dfs.append(df)
+	
+	data = pd.concat(dfs)
 
-	return dfs
+	df_pivot = data.pivot(index='Date', columns='City', values='Temperature')
+
+	return df_pivot
