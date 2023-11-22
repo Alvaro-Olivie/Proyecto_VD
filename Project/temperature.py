@@ -54,7 +54,7 @@ def get_temperatures(cityFilter, dates):
 
 	df_pivot = data.pivot(index='Date', columns='City', values='Temperature')
 
-	return calculate_moving_average(df_pivot)
+	return df_pivot
 
 
 def calculate_moving_average(df):
