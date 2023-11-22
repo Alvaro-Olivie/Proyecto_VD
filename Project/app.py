@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import plotly.graph_objects as go
 import dash
 from dash import dcc
@@ -43,7 +43,7 @@ app.layout = html.Div([
             min_date_allowed=datetime(1950, 1, 1),
             max_date_allowed=datetime(2020, 12, 31),
             initial_visible_month=datetime(2020, 1, 1),
-            start_date=datetime(2000, 1, 1),
+            start_date=datetime(2019, 1, 1),
             end_date=datetime(2020, 12, 31),
         )
     ]),
@@ -66,8 +66,16 @@ app.layout = html.Div([
      dash.dependencies.Input('mean-checkbox', 'value'),])
 
 def update_graph(value, start_date, end_date, mean):
-    # create a line chart with the temperature from data with plotly express
-    df = get_temperatures(value, [start_date[:10], end_date[:10]])
+
+    start_date = datetime.strptime(start_date[:10], '%Y-%m-%d')
+    end_date = datetime.strptime(end_date[:10], '%Y-%m-%d')
+
+    start_date = start_date - timedelta(days=365)
+
+    start_date = start_date.strftime('%Y-%m-%d')
+    end_date = end_date.strftime('%Y-%m-%d')
+
+    df = get_temperatures(value, [start_date, end_date]) 
 
     fig = go.Figure()
 

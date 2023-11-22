@@ -22,7 +22,6 @@ def get_temperatures(cityFilter, dates):
 	lat = city[2].tolist()
 	long = city[3].tolist()
 
-	print(dates)
 	# Make sure all required weather variables are listed here
 	# The order of variables in hourly or daily is important to assign them correctly below
 	URL = "https://archive-api.open-meteo.com/v1/archive"
@@ -59,13 +58,12 @@ def get_temperatures(cityFilter, dates):
 
 
 def calculate_moving_average(df):
-	if len(df) <= 365:
-		return df
-	if len(df) <= 730:
+	if len(df) <= 730 & len(df) > 365:
 		df = df.rolling(window=90).mean()
 	else:
+		# adjust the df so that the first 365 days are not NaN
 		df = df.rolling(window=365).mean()
-	return df
+	return df[365:]
 
 
 
