@@ -1,3 +1,4 @@
+import csv
 from flask import g
 import openmeteo_requests
 import requests_cache
@@ -33,7 +34,17 @@ def get_temperatures(cityFilter = None, dates = ['2000-01-01', '2020-12-31']):
 		"end_date": dates[1],
 		"daily": "temperature_2m_mean"
 	}
-	responses = openmeteo.weather_api(URL, params=params)
+	
+	try:
+		responses = openmeteo.weather_api(URL, params=params)
+	except Exception as e:
+		print("An error occurred:", str(e))
+		responses = None
+
+	# check if response is valid
+	if responses is None:
+		return get_filtered_data(cityFilter, dates)
+
 
 	data = pd.DataFrame(columns=['City', 'Country', 'Latitude', 'Longitude', 'Date', 'Temperature'])
 
@@ -55,9 +66,6 @@ def get_temperatures(cityFilter = None, dates = ['2000-01-01', '2020-12-31']):
 
 	df_pivot = data.pivot(index='Date', columns='City', values='Temperature')
 
-	# write to csv	
-	df_pivot.to_csv('temperature.csv')
-
 	return df_pivot
 
 
@@ -69,6 +77,15 @@ def calculate_moving_average(df):
 		df = df.rolling(window=365).mean()
 	return df[365:]
 
+def get_filtered_data(cf, dates) {
+	# read the temperature csv file
+	df = pd.read_csv('temperature.csv')
 
-get_temperatures()
+	# filter the city list with the city names in the filter list by filtering the columns with the city names
+	df = df.filter(items=cf)
 
+	# filter the rows with the dates in the filter list
+	df = df[(df['Date'] >= dates[0]) & (df['Date'] <= dates[1])]
+
+	return df
+}
