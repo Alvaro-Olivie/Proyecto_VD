@@ -1,3 +1,4 @@
+from flask import g
 import openmeteo_requests
 import requests_cache
 import pandas as pd
@@ -5,7 +6,7 @@ from retry_requests import retry
 from cities import get_cities
 
 
-def get_temperatures(cityFilter, dates):
+def get_temperatures(cityFilter = None, dates = ['2000-01-01', '2020-12-31']):
 	# Setup the Open-Meteo API client with cache and retry on error
 	cache_session = requests_cache.CachedSession('.cache', expire_after=-1)
 	retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
@@ -15,7 +16,7 @@ def get_temperatures(cityFilter, dates):
 	city = get_cities()
 
 	# filter the city list with the city names in the filter list
-	if filter is not None:
+	if cityFilter is not None:
 		city = city[city[0].isin(cityFilter)]
 
 	# get the coordinates in a list
@@ -54,6 +55,9 @@ def get_temperatures(cityFilter, dates):
 
 	df_pivot = data.pivot(index='Date', columns='City', values='Temperature')
 
+	# write to csv	
+	df_pivot.to_csv('temperature.csv')
+
 	return df_pivot
 
 
@@ -66,6 +70,5 @@ def calculate_moving_average(df):
 	return df[365:]
 
 
-
-
+get_temperatures()
 
