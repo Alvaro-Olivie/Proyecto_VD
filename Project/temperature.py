@@ -77,7 +77,7 @@ def calculate_moving_average(df):
 		df = df.rolling(window=365).mean()
 	return df[365:]
 
-def get_filtered_data(cf, dates) {
+def get_filtered_data(cf, dates):
 	# read the temperature csv file
 	df = pd.read_csv('temperature.csv')
 
@@ -88,4 +88,3 @@ def get_filtered_data(cf, dates) {
 	df = df[(df['Date'] >= dates[0]) & (df['Date'] <= dates[1])]
 
 	return df
-}
