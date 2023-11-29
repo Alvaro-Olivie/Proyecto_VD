@@ -20,16 +20,17 @@ cityAvg = avg.mean(axis=0)
 # data = get_temperatures(["Aberdeen", "Ankara"], ['2013-10-23', '2023-10-25'])
 
 app.layout = html.Div([
-    html.H1('Historical Temperatures by City'),
+   html.H1('Historical Temperatures by City', style={'textAlign': 'center', 'marginBottom': 30}),
 
     html.Div([
         dcc.Dropdown(
             id='city-dropdown',
-            options=[i for i in city],
+            options=[{'label': i, 'value': i} for i in city],
             value=[city[0]],
-            multi=True
+            multi=True,
+            style={'width': '80%', 'margin': 'auto'}
         )
-    ]),
+    ], style={'textAlign': 'center', 'marginBottom': 20}),
 
     html.Div([
         dcc.Checklist(
@@ -37,9 +38,10 @@ app.layout = html.Div([
             options=[
                 {'label': 'Show Mean Temperature', 'value': 'mean'},
             ],
-            value=[]
+            value=[],
+            style={'margin': 'auto'}
         )
-    ]),
+    ], style={'textAlign': 'center'}),
 
     html.Div([
         dcc.DatePickerRange(
@@ -108,11 +110,15 @@ def update_table(value):
     # round not working!!!!!!!!!!!
     # filter avg with the selected cities in values and store in avg_t
     avg_t = avg[value]
+
+    m = [str(element) for element in avg_t.mean().round(2).values]
+    ma = [str(element) for element in avg_t.max().round(2).values]
+    mi = [str(element) for element in avg_t.min().round(2).values]
     
     # create a table with the mean, max and min temperatures for each city
     fig = go.Figure(data=[go.Table(
         header=dict(values=['City', 'Mean Temperature', 'Max Temperature', 'Min Temperature']),
-        cells=dict(values=[avg_t.columns, avg_t.mean().round(2), avg_t.round(2).max(), avg_t.round(2).min()]))
+        cells=dict(values=[avg_t.columns, m, ma, mi]))
     ])
 
     return fig
@@ -192,9 +198,6 @@ def update_map(value):
             mode='markers',
             marker=dict(
                 size=geo_t['Average Temperature'][i] * 2,  # Adjust marker size based on average temperature
-                color=geo_t['Average Temperature'][i],
-                colorscale='Viridis',
-                colorbar_title='Average Temperature (°C)'
             ),
             name=geo_t['City'][i]
         ))
@@ -216,21 +219,13 @@ def update_map(value):
      dash.dependencies.Input('mean-checkbox', 'value'),])
 
 def update_prediction(value, mean):
-    df = predict_next_year(get_temperatures(value))
+    df = predict_next_year(calculate_moving_average(get_temperatures(value)))
 
     # filter avg with the selected cities in values and store in avg_t
     fig = go.Figure()
 
     for c in df.columns:
         fig.add_trace(go.Scatter(x=df.index, y=df[c], mode='lines', name=c))
-    
-    # add a line with the average for each city and name it 'x historical average'
-
-    x = 0
-    for c in df.columns:
-        x += cityAvg[c]
-        
-    fig.add_trace(go.Scatter(x=df.index, y=[x] * len(df), mode='lines', name='Future Average'))
 
     if 'mean' in mean:
         fig.add_trace(go.Scatter(x=df.index, y=df.mean(axis=1), mode='lines', name='Mean'))
@@ -238,6 +233,7 @@ def update_prediction(value, mean):
     fig.update_layout(
         xaxis=dict(title='Date'),
         yaxis=dict(title='Temperature (°C)'),
+        title='Predicted Temperatures for Each City',
         showlegend=True
     )
 

@@ -66,6 +66,9 @@ def get_temperatures(cityFilter = None, dates = ['2000-01-01', '2020-12-31']):
 
 	df_pivot = data.pivot(index='Date', columns='City', values='Temperature')
 
+	# rename the index to Date
+	df_pivot.index.name = 'Date'
+
 	return df_pivot
 
 
