@@ -52,7 +52,7 @@ app.layout = html.Div([
             start_date=datetime(2019, 1, 1),
             end_date=datetime(2020, 12, 31),
         )
-    ]),
+    ], style={'textAlign': 'center'}),
 
     html.Div(
         style={
@@ -82,23 +82,32 @@ app.layout = html.Div([
     ),
 
     html.Div(
-        style={'grid-column': '2'},
         children=[
             dcc.Graph(
                 id='city-map',
                 figure={}
             )
-        ]
+        ],
+        style={
+            'margin-bottom': '20px',  # Add some spacing between the Divs
+            'border': '1px solid #ddd',  # Add a border around the Div
+            'border-radius': '5px',  # Add rounded corners
+            'padding': '10px'  # Add some padding inside the Div
+        }
     ),
     html.Div(
-        style={'grid-column': '1'},
         children=[
             dcc.Graph(
                 id='prediction-graph',
                 figure={}
             )
-        ]
-    ),
+        ],
+        style={
+            'border': '1px solid #ddd',  # Add a border around the Div
+            'border-radius': '5px',  # Add rounded corners
+            'padding': '10px'  # Add some padding inside the Div
+        }
+    )
 
 ])
 
@@ -153,6 +162,8 @@ def update_graph(value, start_date, end_date, mean):
     x = 0
     for c in df.columns:
         x += cityAvg[c]
+
+    x = x / len(df.columns)
         
     fig.add_trace(go.Scatter(x=df.index, y=[x] * len(df), mode='lines', name='Historical Average'))
 
