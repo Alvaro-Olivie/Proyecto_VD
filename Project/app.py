@@ -7,6 +7,7 @@ from predictions import predict_next_year
 from temperature import get_temperatures, calculate_moving_average
 from cities import get_cities
 import pandas as pd
+import plotly.express as px
 
 
 app = dash.Dash(__name__)
@@ -14,101 +15,117 @@ app = dash.Dash(__name__)
 geo = get_cities()
 city = geo[0].tolist()
 
-avg = get_temperatures(city, ['2001-01-01', '2021-01-01'])
+avg = get_temperatures(city, ['2001-01-01', '2023-12-01'])
 # for each city in avg get the mean temperature
 cityAvg = avg.mean(axis=0)
 # data = get_temperatures(["Aberdeen", "Ankara"], ['2013-10-23', '2023-10-25'])
 
 app.layout = html.Div([
-   html.H1('Historical Temperatures by City', style={'textAlign': 'center', 'marginBottom': 30}),
+    html.H1('Historical Temperatures by City', style={'textAlign': 'center', 'marginBottom': 30}),
 
-    html.Div([
-        dcc.Dropdown(
-            id='city-dropdown',
-            options=[{'label': i, 'value': i} for i in city],
-            value=[city[0]],
-            multi=True,
-            style={'width': '80%', 'margin': 'auto'}
-        )
-    ], style={'textAlign': 'center', 'marginBottom': 20}),
+    dcc.Tabs([
+        dcc.Tab(label='City Data', children=[
+            html.Div([
+                dcc.Dropdown(
+                    id='city-dropdown',
+                    options=[{'label': i, 'value': i} for i in city],
+                    value=[city[0]],
+                    multi=True,
+                    style={'width': '80%', 'margin': 'auto'}
+                )
+            ], style={'textAlign': 'center', 'marginBottom': 20}),
 
-    html.Div([
-        dcc.Checklist(
-            id='mean-checkbox',
-            options=[
-                {'label': 'Show Mean Temperature', 'value': 'mean'},
-            ],
-            value=[],
-            style={'margin': 'auto'}
-        )
-    ], style={'textAlign': 'center'}),
+            html.Div([
+                dcc.Checklist(
+                    id='mean-checkbox',
+                    options=[
+                        {'label': 'Show Mean Temperature', 'value': 'mean'},
+                    ],
+                    value=[],
+                    style={'margin': 'auto'}
+                )
+            ], style={'textAlign': 'center'}),
 
-    html.Div([
-        dcc.DatePickerRange(
-            id='date-picker-range',
-            min_date_allowed=datetime(2000, 1, 1),
-            max_date_allowed=datetime(2020, 12, 31),
-            initial_visible_month=datetime(2020, 1, 1),
-            start_date=datetime(2019, 1, 1),
-            end_date=datetime(2020, 12, 31),
-        )
-    ], style={'textAlign': 'center'}),
+            html.Div([
+                dcc.DatePickerRange(
+                    id='date-picker-range',
+                    min_date_allowed=datetime(2000, 1, 1),
+                    max_date_allowed=datetime(2023, 12, 1),
+                    initial_visible_month=datetime(2003, 1, 1),
+                    start_date=datetime(2003, 12, 1),
+                    end_date=datetime(2023, 12, 1),
+                )
+            ], style={'textAlign': 'center'}),
 
-    html.Div(
-        style={
-            'display': 'grid',
-            'grid-template-rows': '50% 50%'
-        },
-        children=[
             html.Div(
-                style={'grid-column': '1'},
+                style={
+                    'display': 'grid',
+                    'grid-template-rows': '50% 50%'
+                },
                 children=[
-                    dcc.Graph(
-                        id='temperature-graph',
-                        figure={}
+                    html.Div(
+                        style={'grid-column': '1'},
+                        children=[
+                            dcc.Graph(
+                                id='temperature-graph',
+                                figure={}
+                            )
+                        ]
+                    ),
+                    html.Div(
+                        style={'grid-column': '2'},
+                        children=[
+                            dcc.Graph(
+                                id='temperature-table',
+                                figure={}
+                            )
+                        ]
                     )
                 ]
             ),
+
             html.Div(
-                style={'grid-column': '2'},
                 children=[
                     dcc.Graph(
-                        id='temperature-table',
+                        id='city-map',
                         figure={}
                     )
-                ]
-            )
-        ]
-    ),
+                ],
+                style={
+                    'margin-bottom': '20px',  # Add some spacing between the Divs
+                    'border': '1px solid #ddd',  # Add a border around the Div
+                    'border-radius': '5px',  # Add rounded corners
+                    'padding': '10px'  # Add some padding inside the Div
+                }
+            ),
+        ]),
 
-    html.Div(
-        children=[
-            dcc.Graph(
-                id='city-map',
-                figure={}
-            )
-        ],
-        style={
-            'margin-bottom': '20px',  # Add some spacing between the Divs
-            'border': '1px solid #ddd',  # Add a border around the Div
-            'border-radius': '5px',  # Add rounded corners
-            'padding': '10px'  # Add some padding inside the Div
-        }
-    ),
-    html.Div(
-        children=[
-            dcc.Graph(
-                id='prediction-graph',
-                figure={}
-            )
-        ],
-        style={
-            'border': '1px solid #ddd',  # Add a border around the Div
-            'border-radius': '5px',  # Add rounded corners
-            'padding': '10px'  # Add some padding inside the Div
-        }
-    )
+        dcc.Tab(label='Predictions Model', children=[
+            html.Div([
+                dcc.Dropdown(
+                    id='city-dropdown-predictions',
+                    options=[{'label': i, 'value': i} for i in city],
+                    value=[city[0]],
+                    multi=True,
+                    style={'width': '80%', 'margin': 'auto'}
+                )
+            ], style={'textAlign': 'center', 'marginBottom': 20}),
 
+            html.Div(
+                children=[
+                    dcc.Graph(
+                        id='prediction-graph',
+                        figure={}
+                    )
+                ],
+                style={
+                    'border': '1px solid #ddd',  # Add a border around the Div
+                    'border-radius': '5px',  # Add rounded corners
+                    'padding': '10px'  # Add some padding inside the Div
+                }
+            )
+        ]),
+    ])
 ])
 
 @app.callback(
@@ -183,69 +200,70 @@ def update_graph(value, start_date, end_date, mean):
     [dash.dependencies.Input('city-dropdown', 'value'),])
 
 def update_map(value):
-    # filter avg with the selected cities in values and store in avg_t
     avg_t = avg[value]
 
-    # create a df with two columns, city and average temperature
+    # Create a DataFrame with two columns, city and average temperature
     avg_t = avg_t.mean().reset_index()
     avg_t.columns = ['City', 'Average Temperature']
 
-    # filter geo with the selected cities in values and store in geo_t
+    # Filter geo with the selected cities in values and store in geo_t
     geo_t = geo[geo[0].isin(value)]
 
-    # add column names to geo_t
+    # Add column names to geo_t
     geo_t.columns = ['City', 'Country', 'Latitude', 'Longitude']
 
-    # merge avg_t and geo_t on city
+    # Merge avg_t and geo_t on city
     geo_t = pd.merge(geo_t, avg_t, on='City')
-    
-    fig = go.Figure()
 
-    for i in range(len(geo_t)):
-        fig.add_trace(go.Scattergeo(
-            lon=[geo_t['Longitude'][i].round(2)],
-            lat=[geo_t['Latitude'][i].round(2)],
-            text=geo_t['City'][i] + '<br>' + 'Average Temperature: ' + str(geo_t['Average Temperature'][i].round(2)),
-            mode='markers',
-            marker=dict(
-                size=geo_t['Average Temperature'][i] * 2,  # Adjust marker size based on average temperature
-            ),
-            name=geo_t['City'][i]
-        ))
-
-    fig.update_layout(
-        geo=dict(
-            scope='world',
-            showland=True,
-        ),
+    # Create the map using Plotly Express
+    fig = px.scatter_geo(
+        geo_t,
+        lon='Longitude',
+        lat='Latitude',
+        text='City',
+        size='Average Temperature',
         title='Average Temperature for Each City',
-        showlegend=False
+        template='plotly',
+        color='Average Temperature',
+        color_continuous_scale='Viridis',  # You can choose a different color scale
+        size_max=25,  # Adjust the maximum marker size
+        labels={'Average Temperature': 'Avg. Temp'},
+        hover_data={'Average Temperature': ':.2f'},
     )
+
+    # Add legend
+    fig.update_layout(legend_title_text='Average Temperature (°C)')
 
     return fig
 
 @app.callback(
     dash.dependencies.Output('prediction-graph', 'figure'),
-    [dash.dependencies.Input('city-dropdown', 'value'),
-     dash.dependencies.Input('mean-checkbox', 'value'),])
+    [dash.dependencies.Input('city-dropdown-predictions', 'value'),])
 
-def update_prediction(value, mean):
-    df = predict_next_year(calculate_moving_average(get_temperatures(value)))
+def update_prediction(value):
+    # Get historical temperatures and calculate the moving average
+    historical_data = calculate_moving_average(get_temperatures(value))
 
-    # filter avg with the selected cities in values and store in avg_t
-    fig = go.Figure()
+    # Make predictions for the next year
+    predicted_data = predict_next_year(historical_data)
 
-    for c in df.columns:
-        fig.add_trace(go.Scatter(x=df.index, y=df[c], mode='lines', name=c))
+    # Combine historical and predicted data for plotting
+    combined_data = pd.concat([historical_data, predicted_data])
+    combined_data.dropna(inplace=True) 
 
-    if 'mean' in mean:
-        fig.add_trace(go.Scatter(x=df.index, y=df.mean(axis=1), mode='lines', name='Mean'))
+    # Plotting using Plotly Express for a cleaner and more interactive visualization
+    fig = px.line(combined_data, x=combined_data.index, y=value,
+                  labels={'index': 'Date', 'value': 'Temperature (°C)'},
+                  title='Historical and Predicted Temperatures for Each City',
+                  line_shape='linear',  # Change line shape for better visibility
+                  category_orders={'Date': combined_data.index},
+                  )
 
+    # Enhance the legend
     fig.update_layout(
-        xaxis=dict(title='Date'),
-        yaxis=dict(title='Temperature (°C)'),
-        title='Predicted Temperatures for Each City',
-        showlegend=True
+        legend_title_text='City',
+        legend_traceorder='reversed',  # Reverse the order of legend items
+        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
     )
 
     return fig

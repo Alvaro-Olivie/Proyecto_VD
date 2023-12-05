@@ -1,45 +1,49 @@
 import pandas as pd
-from statsmodels.tsa.arima.model import ARIMA
+from sklearn.linear_model import LinearRegression
 
-def predict_next_year(df):
+def create_lagged_features(df, lags):
+    if df.empty:
+        return df
 
-    predicted_df = pd.DataFrame(columns=df.columns)
+    lagged_df = pd.DataFrame(index=df.index)
 
-    dfs = []
-    for city in df.columns[:]:
-        # Prepare the data for ARIMA
+    for lag in lags:
+        for col in df.columns:
+            lagged_df[f'{col}_lag_{lag}'] = df[col].shift(lag)
 
-        data = df[[city]]
+    return lagged_df.dropna()
 
-        data['d'] = data.index
+def predict_next_year(df, lags=3):
+    predicted_df = pd.DataFrame(index=pd.date_range(start=df.index[-1] + pd.DateOffset(1), periods=365, freq='D'))
 
-        data.columns = ['y', 'd']
-
-        # set the date colummn to date time
-        data['Date'] = pd.to_datetime(data['d'])
-        data.drop(columns=['d'], inplace=True)
-
-        # Create and fit the ARIMA model
-        model = ARIMA(data['y'], order=(1, 1, 1), seasonal_order=(1, 1, 1, 12), freq='D')
-        model_fit = model.fit()
-
-        # get the last element of the data["Date"] column
-        last_date = data['Date'].iloc[-1]
-
-        # add one day to the last date
-        last_date = last_date + pd.DateOffset(1) # type: ignore
-
-        # Make future predictions for the next year
-        future_dates = pd.date_range(start=last_date, periods=365, freq='D')
-        forecast = model_fit.predict(start=len(data), end=len(data) + 364)
-
-        # Create a dataframe for the predicted values
-        predicted_values = pd.DataFrame({'Date': future_dates, city: forecast})
-
+    for city in df.columns:
+        # Prepare the data with lagged features
+        lagged_df = create_lagged_features(df[[city]], range(1, lags + 1))
         
-        # Append the predicted values to the output dataframe
-        dfs.append(predicted_values.drop(columns=['Date']))
+        if lagged_df.empty:
+            # No lagged features available, cannot proceed with prediction
+            continue
 
-    predicted_df = pd.concat(dfs, axis=1)
+        # Split the data into features (X) and target (y)
+        if city in lagged_df.columns:
+            X = lagged_df.drop(city, axis=1)
+            y = lagged_df[city]
 
+            # Fit a linear regression model
+            model = LinearRegression()
+            model.fit(X, y)
+
+            # Create lagged features for the next year
+            future_dates = pd.date_range(start=predicted_df.index[0], periods=365, freq='D')
+            future_lagged_df = create_lagged_features(pd.DataFrame(index=future_dates), range(1, lags + 1))
+
+            # Make predictions for the next year
+            if not future_lagged_df.empty:
+                future_predictions = model.predict(future_lagged_df)
+                # Create a DataFrame with predicted values
+                predicted_values = pd.DataFrame(index=future_dates, data={city: future_predictions})
+                # Append the predicted values to the output dataframe
+                predicted_df = pd.concat([predicted_df, predicted_values], axis=1)
+    
+    print(predicted_df)
     return predicted_df
