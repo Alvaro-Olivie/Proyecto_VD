@@ -1,0 +1,11 @@
+dash==2.14.1
+Flask==3.0.0
+numpy==1.26.2
+openmeteo_requests==1.1.0
+pandas==2.1.4
+plotly==5.17.0
+requests_cache==1.1.1
+retry_requests==2.0.0
+statsmodels==0.14.0
+gunicorn
+dash-tools
