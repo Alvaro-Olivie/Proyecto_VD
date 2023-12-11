@@ -7,7 +7,7 @@ from retry_requests import retry
 from cities import get_cities
 
 
-def get_temperatures(cityFilter = None, dates = ['2002-12-01', '2023-12-01']):
+def get_temperatures(cityFilter = None, dates = ['2002-12-04', '2023-12-01']):
 	# Setup the Open-Meteo API client with cache and retry on error
 	cache_session = requests_cache.CachedSession('.cache', expire_after=-1)
 	retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
@@ -71,7 +71,7 @@ def get_temperatures(cityFilter = None, dates = ['2002-12-01', '2023-12-01']):
 	df_pivot.index.name = 'Date'
 
 	# save the df to a csv file
-	df_pivot.to_csv('temperature.csv')
+	
 
 	return df_pivot
 
@@ -96,4 +96,6 @@ def get_filtered_data(cf, dates):
 
 	return df
 
-get_temperatures()
+
+
+get_temperatures().to_csv('temperature.csv')
