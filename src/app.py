@@ -11,7 +11,7 @@ import plotly.express as px
 
 
 app = dash.Dash(__name__)
-server = app.server
+server = app.server 
 
 geo = get_cities()
 city = geo[0].tolist()
