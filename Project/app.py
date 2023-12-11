@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 import dash
 from dash import dcc
 from dash import html
-from predictions import predict_next_year
+from predictions import predict_next_year, create_regression
 from temperature import get_temperatures, calculate_moving_average
 from cities import get_cities
 import pandas as pd
@@ -110,6 +110,16 @@ app.layout = html.Div([
                     style={'width': '80%', 'margin': 'auto'}
                 )
             ], style={'textAlign': 'center', 'marginBottom': 20}),
+            html.Div([
+                dcc.Checklist(
+                    id='mean-checkbox-predictions',
+                    options=[
+                        {'label': 'Show Mean Prediction', 'value': 'mean'},
+                    ],
+                    value=[],
+                    style={'margin': 'auto'}
+                )
+            ], style={'textAlign': 'center'}),
 
             html.Div(
                 children=[
@@ -238,9 +248,10 @@ def update_map(value):
 
 @app.callback(
     dash.dependencies.Output('prediction-graph', 'figure'),
-    [dash.dependencies.Input('city-dropdown-predictions', 'value'),])
+    [dash.dependencies.Input('city-dropdown-predictions', 'value'),
+     dash.dependencies.Input('mean-checkbox-predictions', 'value'),])
 
-def update_prediction(value):
+def update_prediction(value, mean):
     # Get historical temperatures and calculate the moving average
     historical_data = calculate_moving_average(get_temperatures(value))
 
@@ -249,21 +260,50 @@ def update_prediction(value):
 
     # Combine historical and predicted data for plotting
     combined_data = pd.concat([historical_data, predicted_data])
-    combined_data.dropna(inplace=True) 
+
+    lr = create_regression(combined_data)
+
+    fig = go.Figure()
 
     # Plotting using Plotly Express for a cleaner and more interactive visualization
-    fig = px.line(combined_data, x=combined_data.index, y=value,
-                  labels={'index': 'Date', 'value': 'Temperature (°C)'},
-                  title='Historical and Predicted Temperatures for Each City',
-                  line_shape='linear',  # Change line shape for better visibility
-                  category_orders={'Date': combined_data.index},
-                  )
+    for city in value:
+        # Add trace for historical data
+        fig.add_trace(go.Scatter(x=historical_data.index, y=historical_data[city],
+                      mode='lines',
+                      name=f'Historical Data - {city}',
+                      ))
+        # Add trace for predicted data
+        fig.add_trace(go.Scatter(x=predicted_data.index, y=predicted_data[city],
+                          mode='lines',
+                          name=f'Predicted Data - {city}',
+                          ))
+        
+        fig.add_trace(go.Scatter(x=lr.index, y=lr[city],
+                          mode='lines',
+                          name=f'Trend - {city}',
+                          ))
 
-    # Enhance the legend
+
+    if 'mean' in mean:   
+        # Add another 2 traces for the historical and predicted average temperatures
+        fig.add_trace(go.Scatter(x=historical_data.index, y=historical_data.mean(axis=1),
+                        mode='lines',
+                        name='Historical Average',
+                        ))
+        fig.add_trace(go.Scatter(x=predicted_data.index, y=predicted_data.mean(axis=1),
+                            mode='lines',
+                            name='Predicted Average',
+                            ))
+        fig.add_trace(go.Scatter(x=lr.index, y=lr.mean(axis=1),
+                          mode='lines',
+                          name=f'Trend',
+                          ))
+
+    # update the layout
     fig.update_layout(
-        legend_title_text='City',
-        legend_traceorder='reversed',  # Reverse the order of legend items
-        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
+        xaxis=dict(title='Date'),
+        yaxis=dict(title='Temperature (°C)'),
+        showlegend=True
     )
 
     return fig
