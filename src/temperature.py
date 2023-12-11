@@ -43,7 +43,6 @@ def get_temperatures(cityFilter = None, dates = ['2002-12-04', '2023-12-01']):
 
 	# check if response is valid
 	if responses is None:
-		print("getting here")
 		return get_filtered_data(cityFilter, dates)
 
 

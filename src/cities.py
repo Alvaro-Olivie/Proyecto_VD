@@ -50,5 +50,5 @@ def get_cities():
     result = pd.DataFrame(data, columns = ['City', 'Country', 'Latitude', 'Longitude'])
     """
 
-    return pd.read_csv('src/cities.csv', sep = ',', header = None)
+    return pd.read_csv('cities.csv', sep = ',', header = None)
 
